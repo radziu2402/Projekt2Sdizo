@@ -90,14 +90,18 @@ TimeMeasurement ShortestPathTest::fordBellmanTest(int vertexCount, int density, 
 }
 
 void ShortestPathTest::executionTestAverage() {
-    int vertexCounts[] = {100, 200, 300, 400, 500};
+    int vertexCounts[] = {10, 25, 50, 75, 100 };
     int densities[] = {20, 50, 75, 99};
     std::ofstream file;
     file.open("sptResult.txt");
     if (file.is_open()) {
+        file << "dijkstra" << "\n";
+        file << "L - MATRIX   R - LIST" << "\n";
         for (auto count: vertexCounts) {
             auto *dijkstra = new Dijkstra(count);
+            file << "vertexcount: " << count << "\n";
             for (auto density: densities) {
+                file << "density: " << density << "\n";
                 auto time = dijkstraTest(count, density, dijkstra);
                 file << time.first << " " << time.second << "\n";
             }
@@ -105,9 +109,12 @@ void ShortestPathTest::executionTestAverage() {
         }
 
         file << "\n";
+        file << "fordBellman" << "\n";
         for (auto count: vertexCounts) {
             auto *fordBellman = new FordBellman(count);
+            file << "vertexcount: " << count << "\n";
             for (auto density: densities) {
+                file << "density: " << density << "\n";
                 auto time = fordBellmanTest(count, density, fordBellman);
                 file << time.first << " " << time.second << "\n";
             }

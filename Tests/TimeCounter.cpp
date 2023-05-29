@@ -12,8 +12,7 @@ void TimeCounter::startTimer() {
 void TimeCounter::stopTimer() {
     //Ustawiamy końcowy czas wykonywania i zapisujemy różnicę do 'duration'.
     endTime = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::micro> time = endTime - startTime;
-    duration = time.count();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
 }
 
 double TimeCounter::getDuration() {

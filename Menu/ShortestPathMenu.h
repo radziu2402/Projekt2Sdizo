@@ -6,7 +6,6 @@
 
 class ShortestPathMenu {
 private:
-
     Matrix *matrix{};
     List *list{};
     int startingVertex{};

@@ -1,3 +1,4 @@
+#include <set>
 #include "ShortestPathMenu.h"
 
 ShortestPathMenu::ShortestPathMenu() = default;
@@ -66,14 +67,43 @@ void ShortestPathMenu::loadFile() {
         list = new List(vertexCount);
         std::string str;
         std::getline(file, str);
+
+        std::set<std::pair<int, int>> edgesSet;  // Zbiór, aby śledzić duplikaty krawędzi
+        bool duplicateDetected = false;  // Flaga, która oznacza, czy wykryto duplikat krawędzi
+
         for (int i = 0; i < edgeCount; i++) {
             int start, end, weight;
             file >> start >> end >> weight;
+
+            // Sprawdź, czy krawędź jest duplikatem
+            if (edgesSet.count({start, end}) > 0) {
+                duplicateDetected = true;
+                break;
+            }
+
+            edgesSet.insert({start, end});
+
             matrix->addEdge(start, end, weight);
             list->addEdge(start, end, weight);
         }
+
+        if (duplicateDetected || edgesSet.size() != edgeCount) {
+            std::cout
+                    << "Sprawdź plik źródłowy. Wprowadzono niepoprawną ilość krawędzi lub duplikaty. Wczytywanie zostaje przerwane."
+                    << std::endl;
+            delete matrix;
+            delete list;
+            matrix = nullptr;
+            list = nullptr;
+            file.close();
+            return;
+        }
+
         display();
-    } else std::cout << "Podana nazwa pliku jest nieprawidłowa!" << std::endl;
+    } else {
+        std::cout << "Podana nazwa pliku jest nieprawidłowa!" << std::endl;
+    }
+
     file.close();
 }
 
@@ -97,8 +127,9 @@ void ShortestPathMenu::createRandom() {
     int edgeCount = 0;
     //Generujemy drzewo rozpinające.
     for (int i = 0; i < vertexCount; i++) {
-        if (i == startingVertex) continue;
-        int weight = (rand() % maxEdges) + 1;
+        if (i == startingVertex)
+            continue;
+        int weight = (rand() % vertexCount) + 1;
         matrix->addEdge(startingVertex, i, weight);
         list->addEdge(startingVertex, i, weight);
         edgeCount++;
@@ -108,7 +139,7 @@ void ShortestPathMenu::createRandom() {
     while (edgeCount < maxEdges) {
         int start = rand() % vertexCount;
         int end = rand() % vertexCount;
-        int weight = (rand() % maxEdges) + 1;
+        int weight = (rand() % vertexCount) + 1;
 
         if (matrix->findEdge(start, end) == INT_MAX) {
             matrix->addEdge(start, end, weight);
@@ -129,6 +160,28 @@ void ShortestPathMenu::display() {
 }
 
 void ShortestPathMenu::executeFirst() {
+    // Sprawdzenie czy istnieją ujemne wagi w grafie
+    bool negativeWeightsExist = false;
+
+    if (matrix != nullptr) {
+        for (int i = 0; i < matrix->getSize(); i++) {
+            for (int j = 0; j < matrix->getSize(); j++) {
+                int weight = matrix->findEdge(i, j);
+                if (weight < 0) {
+                    negativeWeightsExist = true;
+                    break;
+                }
+            }
+            if (negativeWeightsExist) {
+                break;
+            }
+        }
+    }
+
+    if (negativeWeightsExist) {
+        std::cout << "\nGraf zawiera ujemne wagi. Algorytm Dijkstry nie może być zastosowany." << std::endl;
+        return;
+    }
     //Wykonuje algorytm Dijkstry dla obu reprezentacji grafu.
     if (matrix == nullptr || list == nullptr) {
         std::cout << "\nGraf jest pusty!" << std::endl;
@@ -148,13 +201,12 @@ void ShortestPathMenu::executeFirst() {
 }
 
 void ShortestPathMenu::executeSecond() {
-    //Wykonuje algorytm Forda-Bellmana dla obu reprezentacji grafu.
     if (matrix == nullptr || list == nullptr) {
         std::cout << "\nGraf jest pusty!" << std::endl;
         return;
     }
 
-    auto *fordBellman = new FordBellman(matrix->getSize());
+    auto* fordBellman = new FordBellman(matrix->getSize());
     fordBellman->proccessMatrix(matrix, startingVertex);
     std::cout << "\nMacierz sąsiedztwa: " << std::endl;
     displayAlgorithmResult(fordBellman->getDistanceArray(), fordBellman->getPredeccesorArray());
@@ -163,6 +215,12 @@ void ShortestPathMenu::executeSecond() {
     fordBellman->proccessList(list, startingVertex);
     std::cout << "Lista sąsiedztwa: " << std::endl;
     displayAlgorithmResult(fordBellman->getDistanceArray(), fordBellman->getPredeccesorArray());
+
+    if (fordBellman->checkNegativeCycle(matrix)) {
+        std::cout << "\nWykryto cykl ujemny w grafie. Wyniki nie będą poprawne." << std::endl;
+    } else {
+        std::cout << "\nNie wykryto cyklu ujemnego w grafie." << std::endl;
+    }
     delete fordBellman;
 }
 

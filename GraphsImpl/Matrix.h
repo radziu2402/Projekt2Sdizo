@@ -10,7 +10,6 @@ class Matrix {
 private:
     const std::string EXCEPTION_DESC = "Nieprawidłowe dane (przekroczony zakres lub zła waga)!";
     int *base;
-
     int graphSize;
 public:
 

@@ -11,7 +11,20 @@ FordBellman::~FordBellman() {
     delete[] distance;
     delete[] predeccesor;
 }
-
+bool FordBellman::checkNegativeCycle(Matrix* graph) {
+    for (int u = 0; u < graph->getSize(); u++) {
+        for (int v = 0; v < graph->getSize(); v++) {
+            int weight = graph->findEdge(u, v);
+            if (weight != INT_MAX) {
+                if (distance[u] + weight < distance[v] && distance[u] != INT_MAX) {
+                    // Wykryto cykl ujemny w grafie
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
 void FordBellman::proccessMatrix(Matrix *graph, int startingVertex) {
     for (int i = 0; i < graph->getSize(); i++) {
         //Dla każdego wierzchołka ustawiamy odległość na nieskończoność.

@@ -98,14 +98,18 @@ TimeMeasurement MSTTest::kruskalTest(int vertexCount, int density, Kruskal *krus
 }
 
 void MSTTest::executionTestAverage() {
-    int vertexCounts[] = {100, 200, 300, 400, 500};
+    int vertexCounts[] = {10, 25, 50, 75, 100 };
     int densities[] = {25, 50, 75, 99};
     std::ofstream file;
     file.open("mstResult.txt");
+    file << "prim" << "\n";
+    file << "L - MATRIX   R - LIST" << "\n";
     if (file.is_open()) {
         for (auto count: vertexCounts) {
+            file << "vertexcount: " << count << "\n";
             auto *prim = new Prim(count);
             for (auto density: densities) {
+                file << "density: " << density << "\n";
                 auto time = primTest(count, density, prim);
                 file << time.first << " " << time.second << "\n";
             }
@@ -113,9 +117,12 @@ void MSTTest::executionTestAverage() {
         }
 
         file << "\n";
+        file << "kruskal" << "\n";
         auto *kruskal = new Kruskal();
         for (auto count: vertexCounts) {
+            file << "vertexcount: " << count << "\n";
             for (auto density: densities) {
+                file << "density: " << density << "\n";
                 auto time = kruskalTest(count, density, kruskal);
                 file << time.first << " " << time.second << "\n";
             }

@@ -1,3 +1,4 @@
+#include <set>
 #include "MinimumSpanningMenu.h"
 
 MinimumSpanningMenu::MinimumSpanningMenu() = default;
@@ -47,7 +48,6 @@ void MinimumSpanningMenu::processInput() {
 }
 
 void MinimumSpanningMenu::loadFile() {
-    //Standardowe wczytywanie z pliku.
     std::string filename;
     int edgeCount, vertexCount;
     std::cout << "\nPodaj nazwę pliku: ";
@@ -67,18 +67,58 @@ void MinimumSpanningMenu::loadFile() {
         list = new List(vertexCount);
         std::string str;
         std::getline(file, str);
+
+        std::set<std::pair<int, int>> edgesSet;  // Zbiór, aby śledzić duplikaty krawędzi
+        std::set<int> visitedVertices;  // Zbiór odwiedzonych wierzchołków
+        bool duplicateDetected = false;  // Flaga, która oznacza, czy wykryto duplikat krawędzi
+        bool loopDetected = false;  // Flaga, która oznacza, czy wykryto pętlę w grafie
+
         for (int i = 0; i < edgeCount; i++) {
             int start, end, weight;
             file >> start >> end >> weight;
+
+            // Sprawdź, czy krawędź jest duplikatem
+            if (edgesSet.count({start, end}) > 0 || edgesSet.count({end, start}) > 0) {
+                duplicateDetected = true;
+                break;
+            }
+
+            // Sprawdź, czy krawędź tworzy pętlę
+            if (start == end) {
+                loopDetected = true;
+                break;
+            }
+
+            visitedVertices.insert(start);
+            visitedVertices.insert(end);
+            edgesSet.insert({start, end});
+            edgesSet.insert({end, start});
+
             matrix->addEdge(start, end, weight);
             matrix->addEdge(end, start, weight);
             list->addEdge(start, end, weight);
             list->addEdge(end, start, weight);
         }
+
+        if (duplicateDetected || loopDetected || edgesSet.size() != 2 * edgeCount) {
+            std::cout << "Sprawdź plik źródłowy. Wprowadzono niepoprawną ilość krawędzi, duplikaty lub pętle. Wczytywanie zostaje przerwane." << std::endl;
+            delete matrix;
+            delete list;
+            matrix = nullptr;
+            list = nullptr;
+            file.close();
+            return;
+        }
+
         display();
-    } else std::cout << "Podana nazwa pliku jest nieprawidłowa!" << std::endl;
+    } else {
+        std::cout << "Podana nazwa pliku jest nieprawidłowa!" << std::endl;
+    }
+
     file.close();
 }
+
+
 
 void MinimumSpanningMenu::createRandom() {
     //Wczytujemy parametry generowanego grafu od użytkownika.
@@ -94,13 +134,12 @@ void MinimumSpanningMenu::createRandom() {
     }
     matrix = new Matrix(vertexCount);
     list = new List(vertexCount);
-
-    int maxEdges = static_cast<int>(density / 100.0f * (((vertexCount - 1) / 2.0f) * vertexCount));
+    int maxEdges = static_cast<int>(density / 100.0f * (((vertexCount) / 2.0f) * vertexCount));
     int edgeCount = 0;
     //Generujemy drzewo rozpinające.
     for (int i = 0; i < vertexCount - 1; i++) {
         //Dla problemu minimalnego drzewa rozpinającego krawędzie są nieskierowane.
-        int weight = (rand() % maxEdges) + 1;
+        int weight = (rand() % vertexCount) + 1;
         matrix->addEdge(i, i + 1, weight);
         matrix->addEdge(i + 1, i, weight);
 
@@ -113,7 +152,7 @@ void MinimumSpanningMenu::createRandom() {
     while (edgeCount < maxEdges) {
         int start = rand() % vertexCount;
         int end = rand() % vertexCount;
-        int weight = (rand() % maxEdges) + 1;
+        int weight = (rand() % vertexCount) + 1;
 
         if (matrix->findEdge(start, end) == INT_MAX) {
             matrix->addEdge(start, end, weight);
@@ -184,7 +223,7 @@ void MinimumSpanningMenu::test() {
 void MinimumSpanningMenu::displayKruskalResult(std::list<Edge> &edgeList) {
     //Wyświetla wynik działania algorytmu (lista krawędzi należących do MSTTest).
     int mstWeight = 0;
-    std::cout << "Krawędzie należące do MSTTest: " << std::endl;
+    std::cout << "Krawędzie należące do MST: " << std::endl;
     for (auto item: edgeList) {
         std::cout << item.start << ", " << item.end << ", waga: " << item.weight << std::endl;
         mstWeight += item.weight;
@@ -195,7 +234,7 @@ void MinimumSpanningMenu::displayKruskalResult(std::list<Edge> &edgeList) {
 void MinimumSpanningMenu::displayPrimResult(int *key, int *connection, int size) {
     //Wyświetla wynik działania algorytmu (tablica wag i połączeń).
     int mstWeight = 0;
-    std::cout << "Krawędzie należące do MSTTest: " << std::endl;
+    std::cout << "Krawędzie należące do MST: " << std::endl;
     for (int i = 0; i < size; i++) {
         if (connection[i] != -1) {
             std::cout << i << ", " << connection[i] << ", waga: " << key[i] << std::endl;

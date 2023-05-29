@@ -24,4 +24,6 @@ public:
     int *getDistanceArray();
 
     int *getPredeccesorArray();
+
+    bool checkNegativeCycle(Matrix *graph);
 };
